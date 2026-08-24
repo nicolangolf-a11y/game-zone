@@ -1,0 +1,14 @@
+create table if not exists public.favorites (id bigint generated always as identity primary key,user_id uuid not null references auth.users(id) on delete cascade,game_id integer not null,created_at timestamptz not null default now(),unique(user_id,game_id));
+create table if not exists public.game_lists (id bigint generated always as identity primary key,user_id uuid not null references auth.users(id) on delete cascade,name text not null check(char_length(name) between 1 and 50),description text,created_at timestamptz not null default now());
+create table if not exists public.game_list_items (id bigint generated always as identity primary key,list_id bigint not null references public.game_lists(id) on delete cascade,game_id integer not null,created_at timestamptz not null default now(),unique(list_id,game_id));
+alter table public.favorites enable row level security; alter table public.game_lists enable row level security; alter table public.game_list_items enable row level security;
+drop policy if exists "favorites_select" on public.favorites; create policy "favorites_select" on public.favorites for select to authenticated using(auth.uid()=user_id);
+drop policy if exists "favorites_insert" on public.favorites; create policy "favorites_insert" on public.favorites for insert to authenticated with check(auth.uid()=user_id);
+drop policy if exists "favorites_delete" on public.favorites; create policy "favorites_delete" on public.favorites for delete to authenticated using(auth.uid()=user_id);
+drop policy if exists "lists_select" on public.game_lists; create policy "lists_select" on public.game_lists for select to authenticated using(auth.uid()=user_id);
+drop policy if exists "lists_insert" on public.game_lists; create policy "lists_insert" on public.game_lists for insert to authenticated with check(auth.uid()=user_id);
+drop policy if exists "lists_update" on public.game_lists; create policy "lists_update" on public.game_lists for update to authenticated using(auth.uid()=user_id) with check(auth.uid()=user_id);
+drop policy if exists "lists_delete" on public.game_lists; create policy "lists_delete" on public.game_lists for delete to authenticated using(auth.uid()=user_id);
+drop policy if exists "items_select" on public.game_list_items; create policy "items_select" on public.game_list_items for select to authenticated using(exists(select 1 from public.game_lists l where l.id=list_id and l.user_id=auth.uid()));
+drop policy if exists "items_insert" on public.game_list_items; create policy "items_insert" on public.game_list_items for insert to authenticated with check(exists(select 1 from public.game_lists l where l.id=list_id and l.user_id=auth.uid()));
+drop policy if exists "items_delete" on public.game_list_items; create policy "items_delete" on public.game_list_items for delete to authenticated using(exists(select 1 from public.game_lists l where l.id=list_id and l.user_id=auth.uid()));
