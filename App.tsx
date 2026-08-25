@@ -14,6 +14,7 @@ type Game = {
   platform: string;
   image: string;
   rating: number;
+  description: string;
 };
 
 type GameList = {
@@ -30,37 +31,37 @@ const games: Game[] = [
     title: "Cyber Legends",
     genre: "Action RPG",
     platform: "PC · PS5 · Xbox",
-    image:
-      "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=900&q=80",
     rating: 4.8,
+    description: "Erkunde eine futuristische Welt voller Cyber-Technologie, gefährlicher Missionen und spannender Kämpfe."
   },
   {
     id: 2,
     title: "Speed Horizon",
     genre: "Rennspiel",
     platform: "PC · PS5",
-    image:
-      "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?auto=format&fit=crop&w=900&q=80",
     rating: 4.6,
+    description: "Rase durch spektakuläre Landschaften und stelle neue Bestzeiten gegen andere Fahrer auf."
   },
   {
     id: 3,
     title: "Galaxy Warriors",
     genre: "Shooter",
     platform: "PC · Xbox",
-    image:
-      "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=900&q=80",
     rating: 4.9,
+    description: "Verteidige die Galaxie gegen mächtige Gegner und kämpfe dich durch actionreiche Missionen."
   },
   {
     id: 4,
     title: "Fantasy Quest",
     genre: "Fantasy RPG",
     platform: "PC · PS5",
-    image:
-      "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=900&q=80",
     rating: 4.7,
-  },
+    description: "Entdecke eine magische Welt mit Monstern, Geheimnissen, Quests und legendären Schätzen."
+  }
 ];
 
 export default function App() {
@@ -75,6 +76,7 @@ export default function App() {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [selected, setSelected] = useState<GameList | null>(null);
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [page, setPage] = useState<"games" | "play" | "lists">("games");
   const [loading, setLoading] = useState(true);
 
@@ -99,15 +101,13 @@ export default function App() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error) {
-      setLists(data ?? []);
-    }
+    if (!error) setLists(data ?? []);
   };
 
   useEffect(() => {
     (async () => {
       const {
-        data: { user },
+        data: { user }
       } = await supabase.auth.getUser();
 
       setUser(user);
@@ -121,7 +121,7 @@ export default function App() {
     })();
 
     const {
-      data: { subscription },
+      data: { subscription }
     } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null;
 
@@ -146,18 +146,18 @@ export default function App() {
     if (register) {
       const { error } = await supabase.auth.signUp({
         email,
-        password,
+        password
       });
 
       setMessage(
         error
           ? error.message
-          : "Konto erstellt. Prüfe ggf. deine E-Mail."
+          : "Konto erstellt. Prüfe gegebenenfalls deine E-Mail."
       );
     } else {
       const { error } = await supabase.auth.signInWithPassword({
         email,
-        password,
+        password
       });
 
       if (error) setMessage(error.message);
@@ -167,9 +167,9 @@ export default function App() {
   const fav = async (id: number) => {
     if (!user) return;
 
-    const yes = favorites.includes(id);
+    const exists = favorites.includes(id);
 
-    const query = yes
+    const query = exists
       ? supabase
           .from("favorites")
           .delete()
@@ -187,7 +187,7 @@ export default function App() {
     }
 
     setFavorites((current) =>
-      yes
+      exists
         ? current.filter((value) => value !== id)
         : [...current, id]
     );
@@ -203,7 +203,7 @@ export default function App() {
       .insert({
         user_id: user.id,
         name: name.trim(),
-        description: desc.trim() || null,
+        description: desc.trim() || null
       })
       .select()
       .single();
@@ -234,9 +234,7 @@ export default function App() {
       current.filter((list) => list.id !== id)
     );
 
-    if (selected?.id === id) {
-      setSelected(null);
-    }
+    if (selected?.id === id) setSelected(null);
   };
 
   const add = async (listId: number, gameId: number) => {
@@ -244,7 +242,7 @@ export default function App() {
       .from("game_list_items")
       .insert({
         list_id: listId,
-        game_id: gameId,
+        game_id: gameId
       });
 
     setMessage(
@@ -256,7 +254,7 @@ export default function App() {
     );
   };
 
-  const winner = () => {
+  const getWinner = (currentBoard: (string | null)[]) => {
     const lines = [
       [0, 1, 2],
       [3, 4, 5],
@@ -265,27 +263,27 @@ export default function App() {
       [1, 4, 7],
       [2, 5, 8],
       [0, 4, 8],
-      [2, 4, 6],
+      [2, 4, 6]
     ];
 
     for (const [a, b, c] of lines) {
       if (
-        board[a] &&
-        board[a] === board[b] &&
-        board[a] === board[c]
+        currentBoard[a] &&
+        currentBoard[a] === currentBoard[b] &&
+        currentBoard[a] === currentBoard[c]
       ) {
-        return board[a];
+        return currentBoard[a];
       }
     }
 
     return null;
   };
 
-  const ticWinner = winner();
-  const draw = !ticWinner && board.every(Boolean);
+  const ticWinner = getWinner(board);
+  const draw = !ticWinner && board.every((cell) => cell !== null);
 
   const playMove = (index: number) => {
-    if (board[index] || ticWinner) return;
+    if (board[index] || ticWinner || draw) return;
 
     const nextBoard = [...board];
     nextBoard[index] = turn;
@@ -300,11 +298,7 @@ export default function App() {
   };
 
   if (loading) {
-    return (
-      <div className="loading">
-        🎮 GameZone wird geladen...
-      </div>
-    );
+    return <div className="loading">🎮 GameZone wird geladen...</div>;
   }
 
   if (!user) {
@@ -312,9 +306,7 @@ export default function App() {
       <div className="auth-page">
         <div className="auth-card">
           <div className="logo">🎮</div>
-
           <h1>GameZone</h1>
-
           <p>Deine Gaming-Welt an einem Ort.</p>
 
           <form onSubmit={auth}>
@@ -340,9 +332,7 @@ export default function App() {
             </button>
           </form>
 
-          {message && (
-            <div className="message">{message}</div>
-          )}
+          {message && <div className="message">{message}</div>}
 
           <button
             className="link-button"
@@ -396,10 +386,7 @@ export default function App() {
 
         <div className="account">
           <span>👤 {user.email}</span>
-
-          <button
-            onClick={() => supabase.auth.signOut()}
-          >
+          <button onClick={() => supabase.auth.signOut()}>
             Abmelden
           </button>
         </div>
@@ -408,9 +395,7 @@ export default function App() {
       {page === "games" && (
         <>
           <section className="hero">
-            <span className="badge">
-              GAMING COMMUNITY
-            </span>
+            <span className="badge">GAMING COMMUNITY</span>
 
             <h1>
               Entdecke dein
@@ -419,18 +404,16 @@ export default function App() {
             </h1>
 
             <p>
-              Entdecke Spiele, speichere deine
-              Favoriten und erstelle eigene
-              Spielelisten.
+              Klicke auf ein Spiel und entdecke mehr
+              Informationen. Speichere deine Favoriten
+              und erstelle eigene Listen.
             </p>
 
             <input
               className="search"
               placeholder="🔍 Spiel suchen..."
               value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
+              onChange={(e) => setSearch(e.target.value)}
             />
           </section>
 
@@ -438,10 +421,7 @@ export default function App() {
             <div className="section-title">
               <div>
                 <h2>🔥 Beliebte Spiele</h2>
-                <p>
-                  Entdecke Spiele aus verschiedenen
-                  Genres.
-                </p>
+                <p>Klicke auf ein Spiel für weitere Informationen.</p>
               </div>
 
               <div className="stats">
@@ -452,79 +432,115 @@ export default function App() {
             <div className="games">
               {filtered.map((game) => (
                 <article
-                  className="game-card"
+                  className="game-card clickable"
                   key={game.id}
+                  onClick={() => setSelectedGame(game)}
                 >
-                  <img
-                    src={game.image}
-                    alt={game.title}
-                  />
+                  <img src={game.image} alt={game.title} />
 
                   <div className="game-info">
                     <div className="game-top">
-                      <span className="genre">
-                        {game.genre}
-                      </span>
-
-                      <span className="rating">
-                        ⭐ {game.rating}
-                      </span>
+                      <span className="genre">{game.genre}</span>
+                      <span className="rating">⭐ {game.rating}</span>
                     </div>
 
                     <h3>{game.title}</h3>
                     <p>{game.platform}</p>
 
-                    <div className="game-actions">
-                      <button
-                        className={
-                          favorites.includes(game.id)
-                            ? "favorite active"
-                            : "favorite"
-                        }
-                        onClick={() =>
-                          void fav(game.id)
-                        }
-                      >
-                        {favorites.includes(game.id)
-                          ? "★ Favorit"
-                          : "☆ Favorit"}
-                      </button>
-
-                      {lists.length > 0 && (
-                        <select
-                          defaultValue=""
-                          onChange={(e) => {
-                            const id = Number(
-                              e.target.value
-                            );
-
-                            if (id) {
-                              void add(id, game.id);
-                            }
-
-                            e.target.value = "";
-                          }}
-                        >
-                          <option value="">
-                            ➕ Zur Liste
-                          </option>
-
-                          {lists.map((list) => (
-                            <option
-                              key={list.id}
-                              value={list.id}
-                            >
-                              {list.name}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
+                    <button
+                      className="details-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedGame(game);
+                      }}
+                    >
+                      Details ansehen →
+                    </button>
                   </div>
                 </article>
               ))}
             </div>
           </main>
+
+          {selectedGame && (
+            <div
+              className="modal-backdrop"
+              onClick={() => setSelectedGame(null)}
+            >
+              <div
+                className="game-modal"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  className="close-modal"
+                  onClick={() => setSelectedGame(null)}
+                >
+                  ✕
+                </button>
+
+                <img
+                  src={selectedGame.image}
+                  alt={selectedGame.title}
+                />
+
+                <div className="modal-content">
+                  <span className="genre">
+                    {selectedGame.genre}
+                  </span>
+
+                  <h2>{selectedGame.title}</h2>
+
+                  <p className="modal-rating">
+                    ⭐ {selectedGame.rating} Bewertung
+                  </p>
+
+                  <p>{selectedGame.description}</p>
+
+                  <p>
+                    <strong>Plattform:</strong>{" "}
+                    {selectedGame.platform}
+                  </p>
+
+                  <div className="modal-actions">
+                    <button
+                      className={
+                        favorites.includes(selectedGame.id)
+                          ? "favorite active"
+                          : "favorite"
+                      }
+                      onClick={() => void fav(selectedGame.id)}
+                    >
+                      {favorites.includes(selectedGame.id)
+                        ? "★ Aus Favoriten entfernen"
+                        : "☆ Zu Favoriten hinzufügen"}
+                    </button>
+
+                    {lists.length > 0 && (
+                      <select
+                        defaultValue=""
+                        onChange={(e) => {
+                          const id = Number(e.target.value);
+
+                          if (id) {
+                            void add(id, selectedGame.id);
+                            e.target.value = "";
+                          }
+                        }}
+                      >
+                        <option value="">➕ Zu einer Liste hinzufügen</option>
+
+                        {lists.map((list) => (
+                          <option key={list.id} value={list.id}>
+                            {list.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -533,19 +549,13 @@ export default function App() {
           <div className="section-title">
             <div>
               <h2>🕹️ Jetzt spielen</h2>
-              <p>
-                Spiele direkt in GameZone oder entdecke
-                kostenlose Browser-Spiele.
-              </p>
+              <p>Spiele direkt in GameZone.</p>
             </div>
           </div>
 
-          <section className="create-list">
+          <section className="create-list tic-game">
             <h2>❌⭕ Tic-Tac-Toe</h2>
-
-            <p>
-              Spiele direkt hier gegen einen Freund.
-            </p>
+            <p>Spiele mit X und O gegen einen Freund.</p>
 
             <h3>
               {ticWinner
@@ -561,36 +571,30 @@ export default function App() {
                   key={index}
                   className="tic-cell"
                   onClick={() => playMove(index)}
+                  disabled={Boolean(cell) || Boolean(ticWinner) || draw}
                 >
                   {cell}
                 </button>
               ))}
             </div>
 
-            <button
-              className="primary"
-              onClick={resetGame}
-            >
-              🔄 Neu starten
+            <button className="primary" onClick={resetGame}>
+              🔄 Neues Spiel
             </button>
           </section>
 
           <section className="browser-games">
-            <h2>🌐 Browser-Spiele</h2>
-
+            <h2>🌐 Noch mehr entdecken</h2>
             <p>
-              Öffne kostenlose Spiele direkt in deinem
-              Browser.
+              Hier kannst du weitere Spiele-Plattformen öffnen.
             </p>
 
             <div className="games">
               <article className="game-card">
                 <div className="game-info">
                   <h3>🎮 CrazyGames</h3>
-
                   <p>
-                    Viele kostenlose Spiele aus
-                    verschiedenen Genres.
+                    Viele kostenlose Spiele aus verschiedenen Genres.
                   </p>
 
                   <button
@@ -598,7 +602,8 @@ export default function App() {
                     onClick={() =>
                       window.open(
                         "https://www.crazygames.com/de",
-                        "_blank"
+                        "_blank",
+                        "noopener,noreferrer"
                       )
                     }
                   >
@@ -610,7 +615,6 @@ export default function App() {
               <article className="game-card">
                 <div className="game-info">
                   <h3>🕹️ itch.io</h3>
-
                   <p>
                     Entdecke Indie- und Browser-Spiele.
                   </p>
@@ -620,7 +624,8 @@ export default function App() {
                     onClick={() =>
                       window.open(
                         "https://itch.io/games/platform-web",
-                        "_blank"
+                        "_blank",
+                        "noopener,noreferrer"
                       )
                     }
                   >
@@ -638,10 +643,7 @@ export default function App() {
           <div className="section-title">
             <div>
               <h2>📚 Meine Spielelisten</h2>
-              <p>
-                Organisiere deine Spiele nach deinen
-                eigenen Kategorien.
-              </p>
+              <p>Organisiere deine Spiele nach deinen eigenen Kategorien.</p>
             </div>
           </div>
 
@@ -669,38 +671,26 @@ export default function App() {
             </form>
           </section>
 
-          {message && (
-            <div className="message">{message}</div>
-          )}
+          {message && <div className="message">{message}</div>}
 
           <div className="lists">
             {lists.map((list) => (
-              <article
-                className="list-card"
-                key={list.id}
-              >
+              <article className="list-card" key={list.id}>
                 <div className="list-icon">📁</div>
 
                 <div>
                   <h3>{list.name}</h3>
-                  <p>
-                    {list.description ||
-                      "Keine Beschreibung"}
-                  </p>
+                  <p>{list.description || "Keine Beschreibung"}</p>
                 </div>
 
                 <div className="list-actions">
-                  <button
-                    onClick={() => setSelected(list)}
-                  >
+                  <button onClick={() => setSelected(list)}>
                     Öffnen
                   </button>
 
                   <button
                     className="danger"
-                    onClick={() =>
-                      void removeList(list.id)
-                    }
+                    onClick={() => void removeList(list.id)}
                   >
                     Löschen
                   </button>
@@ -713,10 +703,7 @@ export default function App() {
             <div className="empty">
               <div>📚</div>
               <h3>Noch keine Spielelisten</h3>
-              <p>
-                Erstelle deine erste persönliche
-                Spieleliste.
-              </p>
+              <p>Erstelle deine erste persönliche Spieleliste.</p>
             </div>
           )}
 
@@ -728,9 +715,7 @@ export default function App() {
                   <p>{selected.description}</p>
                 </div>
 
-                <button
-                  onClick={() => setSelected(null)}
-                >
+                <button onClick={() => setSelected(null)}>
                   Schließen
                 </button>
               </div>
@@ -739,14 +724,8 @@ export default function App() {
 
               <div className="games">
                 {games.map((game) => (
-                  <article
-                    className="small-game"
-                    key={game.id}
-                  >
-                    <img
-                      src={game.image}
-                      alt={game.title}
-                    />
+                  <article className="small-game" key={game.id}>
+                    <img src={game.image} alt={game.title} />
 
                     <div>
                       <strong>{game.title}</strong>
@@ -754,10 +733,7 @@ export default function App() {
 
                       <button
                         onClick={() =>
-                          void add(
-                            selected.id,
-                            game.id
-                          )
+                          void add(selected.id, game.id)
                         }
                       >
                         ➕ Hinzufügen
